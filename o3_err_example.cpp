@@ -1,16 +1,429 @@
-#include "SymFun.hpp"
 #include <stdexcept>
 #include <string>
 
+#include <vector>
+#include <cmath>
+#define MY_PI 3.1415926535897932
+#include <cstring>
+#include <map>
+#include <string>
+#include <numeric>
+#include <algorithm>
+#include <iostream>
+#include <sstream>
 
-int main(int argc, char *argv[]) {
 
-    if (argc < 2){
-        throw std::invalid_argument("Give descriptor file name");
-        return -1;
+template<class DataType = double>
+class _Array_Basic {
+public:
+    _Array_Basic();
+    _Array_Basic(std::size_t const count);
+    _Array_Basic(std::size_t const count, DataType const value);
+    _Array_Basic(std::size_t const count, DataType const *array);
+    _Array_Basic(_Array_Basic<DataType> const &other);
+    _Array_Basic(_Array_Basic<DataType> &&other);
+    ~_Array_Basic();
+    _Array_Basic<DataType> &operator=(_Array_Basic<DataType> const &other);
+    _Array_Basic<DataType> &operator=(_Array_Basic<DataType> &&other);
+    inline DataType const *data() const noexcept;
+    inline DataType *data() noexcept;
+    inline std::size_t size() const;
+    inline void clear() noexcept;
+    inline void shrink_to_fit();
+    inline std::size_t capacity() const noexcept;
+    inline void push_back(DataType const &value);
+    inline void push_back(DataType &&value);
+    std::vector<DataType> m;
+protected:
+    inline void _range_check(int _n) const;
+    inline void _range_check(int _n, std::size_t tsize) const;
+};
+
+template<class DataType = double>
+class Array1DView {
+public:
+    Array1DView(std::size_t const count, DataType *array);
+    Array1DView(std::size_t const count, DataType const *array);
+    Array1DView(Array1DView<DataType> const &other);
+    ~Array1DView();
+    inline DataType const *data() const noexcept;
+    inline DataType *data() noexcept;
+    inline const DataType operator()(int i) const;
+    inline DataType &operator()(int i);
+    inline DataType const at(int i) const;
+    inline DataType &at(int i);
+    const DataType operator[](int i) const;
+    DataType &operator[](int i);
+private:
+    Array1DView() = delete;
+    Array1DView<DataType> &operator=(Array1DView<DataType> const &other)
+    = delete;
+    Array1DView<DataType> &operator=(Array1DView<DataType> &&other) = delete;
+protected:
+    inline void _range_check(int _n, std::size_t tsize) const;
+protected:
+    /*! The extent of the container in the 1st mode */
+    std::size_t _extentZero;
+    /*! Data pointer */
+    DataType *const m;
+    };
+
+template<class DataType = double>
+class Array2DView {
+public:
+    Array2DView(std::size_t const extentZero, std::size_t const extentOne, DataType *array);
+    Array2DView(std::size_t const extentZero, std::size_t const extentOne, DataType const *array);
+    Array2DView(Array2DView<DataType> const &other);
+    ~Array2DView();
+    inline DataType const *data() const noexcept;
+    inline DataType *data() noexcept;
+    inline Array1DView<DataType> data_1D(int i);
+    inline const DataType operator()(int i, int j) const;
+    inline DataType &operator()(int i, int j);
+    inline DataType const at(int i, int j) const;
+    inline DataType &at(int i, int j);
+    class j_operator {
+    public:
+        j_operator(Array2DView<DataType> &_array, int i);
+        const DataType operator[](int j) const;
+        DataType &operator[](int j);
+    private:
+        /*! Refernce to Array2D class */
+        Array2DView<DataType> &j_array;
+        std::size_t _i;
+    };
+    const j_operator operator[](int i) const;
+    j_operator operator[](int i);
+private:
+    Array2DView() = delete;
+    Array2DView<DataType> &operator=(Array2DView<DataType> const &other)
+    = delete;
+    Array2DView<DataType> &operator=(Array2DView<DataType> &&other) = delete;
+protected:
+    inline void _range_check(int _n, std::size_t tsize) const;
+protected:
+    /*! The extent of the container in the 1st mode */
+    std::size_t _extentZero;
+    /*! The extent of the container in the 2nd mode */
+    std::size_t _extentOne;
+    /*! Data pointer */
+    DataType *const m;
+};
+
+template<class DataType = double>
+class Array2D : public _Array_Basic<DataType> {
+public:
+    Array2D();
+    Array2D(std::size_t const extentZero, std::size_t const extentOne);
+    Array2D(std::size_t const extentZero, std::size_t const extentOne, DataType const value);
+    Array2D(std::size_t const extentZero, std::size_t const extentOne, DataType const *array);
+    Array2D(Array2D<DataType> const &other);
+    Array2D(Array2D<DataType> &&other);
+    ~Array2D();
+    Array2D<DataType> &operator=(Array2D<DataType> const &other);
+    Array2D<DataType> &operator=(Array2D<DataType> &&other);
+    inline Array1DView<DataType> data_1D(int i);
+    inline void resize(int const extentZero, int const extentOne);
+    inline void resize(int const extentZero, int const extentOne, DataType const new_value);
+    inline void resize(int const extentZero, int const extentOne, DataType const *new_array);
+    inline const DataType operator()(int i, int j) const;
+    inline DataType &operator()(int i, int j);
+    inline DataType const at(int i, int j) const;
+    inline DataType &at(int i, int j);
+    class j_operator {
+    public:
+        j_operator(Array2D<DataType> &_array, int i);
+        const DataType operator[](int j) const;
+        DataType &operator[](int j);
+    private:
+        /*! Refernce to Array2D class */
+        Array2D<DataType> &j_array;
+        std::size_t _i;
+};
+    const j_operator operator[](int i) const;
+    j_operator operator[](int i);
+protected:
+    /*! The extent of the container in the 1st mode */
+    std::size_t _extentZero;
+    /*! The extent of the container in the 2nd mode */
+    std::size_t _extentOne;
+};
+
+void getNextDataLine(FILE *const filePtr, char *const nextLine, int const maxSize, int *endOfFileFlag);
+int getXdouble(char *linePtr, const int N, double *list);
+int getXint(char *linePtr, const int N, int *list);
+void lowerCase(char *linePtr);
+void lowerCase(std::string &InputLineArg);
+
+
+#define DIM 3
+
+typedef double VectorOfSizeDIM[DIM];
+
+
+int enzyme_dup;
+int enzyme_out;
+int enzyme_const;
+
+
+class SymmetryFunctionParams {
+public:
+    SymmetryFunctionParams();
+
+    ~SymmetryFunctionParams();
+
+    inline void set_species(std::vector<std::string> &species);
+
+    inline void get_species(std::vector<std::string> &species);
+
+    inline int get_num_species();
+    int width;
+
+    void set_cutoff(char const *name,
+                    std::size_t Nspecies,
+                    double const *rcut_2D);
+
+    inline double get_cutoff(int iCode, int jCode);
+
+    void add_descriptor(char const *name,
+                        double const *values,
+                        int row,
+                        int col);
+
+    int get_num_descriptors();
+
+    std::vector<std::string> species_;
+    std::vector<int> name_;
+    std::vector<int> starting_index_;
+    Array2D<double> rcut_2D_;
+    std::vector<Array2D<double> > params_;
+    std::vector<int> num_param_sets_;
+    std::vector<int> num_params_;
+    bool has_three_body_;
+    double bhor2ang = 0.529177;
+    void init();
+};
+
+inline double cut_cos(double r, double rcut);
+void symmetry_function_atomic(int i,
+                              double const *coords,
+                              int const *particleSpeciesCodes,
+                              int const *neighlist,
+                              int numnei,
+                              double * desc,
+                              SymmetryFunctionParams *SymParam);
+
+void sym_g2(double eta,
+            double Rs,
+            double r,
+            double rcut,
+            double &phi);
+
+
+void __enzyme_autodiff(void (*)(
+        int const,
+        double const *,
+        int const *,
+        int const *,
+        int const,
+        double *const,
+        SymmetryFunctionParams *),
+                       int, int,
+                       int, double const *, double const *,
+                       int, int const *,
+                       int, int const *,
+                       int, int,
+                       int, double *, double const *,
+                       int, SymmetryFunctionParams *);
+
+void grad_symmetry_function_atomic(int  i,
+                                   double const *coords,
+                                   double const *d_coords,
+                                   int const *particleSpeciesCodes,
+                                   int const *neighlist,
+                                   int  numnei,
+                                   double * desc,
+                                   double const *d_grad_loss_zeta,
+                                   SymmetryFunctionParams *SymParam);
+
+
+SymmetryFunctionParams::SymmetryFunctionParams() : has_three_body_(false) {
+}
+
+SymmetryFunctionParams::~SymmetryFunctionParams() {}
+
+inline void SymmetryFunctionParams::set_species(std::vector<std::string> &species) {
+    species_.resize(species.size());
+    std::copy(species.begin(), species.end(), species_.begin());
+};
+
+inline void SymmetryFunctionParams::get_species(std::vector<std::string> &species) {
+    species.resize(species_.size());
+    std::copy(species_.begin(), species_.end(), species.begin());
+};
+
+inline int SymmetryFunctionParams::get_num_species() { return species_.size(); }
+
+void SymmetryFunctionParams::set_cutoff(char const *name,
+                                        std::size_t const Nspecies,
+                                        double const *rcut_2D) {
+    (void) name;   // to avoid unused warning
+    rcut_2D_.resize(Nspecies, Nspecies, rcut_2D);
+}
+
+inline double SymmetryFunctionParams::get_cutoff(int const iCode, int const jCode) {
+    return rcut_2D_(iCode, jCode);
+};
+
+void SymmetryFunctionParams::add_descriptor(char const *name,
+                                            double const *values,
+                                            int const row,
+                                            int const col) {
+    // Enzyme string comparison workaround
+    if (strcmp(name, "g1") == 0) { name_.push_back(1); };
+    if (strcmp(name, "g2") == 0) { name_.push_back(2); };
+    if (strcmp(name, "g3") == 0) { name_.push_back(3); };
+    if (strcmp(name, "g4") == 0) { name_.push_back(4); };
+    if (strcmp(name, "g5") == 0) { name_.push_back(5); };
+
+    Array2D<double> params(row, col, values);
+    params_.push_back(std::move(params));
+
+    auto sum = std::accumulate(num_param_sets_.begin(), num_param_sets_.end(), 0);
+    starting_index_.push_back(sum);
+
+    num_param_sets_.push_back(row);
+    num_params_.push_back(col);
+
+    if (strcmp(name, "g4") == 0 || strcmp(name, "g5") == 0) {
+        has_three_body_ = true;
+    }
+}
+
+int SymmetryFunctionParams::get_num_descriptors() {
+    return std::accumulate(num_param_sets_.begin(), num_param_sets_.end(), 0);
+}
+
+
+void SymmetryFunctionParams::init() {
+    int n_species = 1;
+    double * cutoff_matrix = new double[n_species * n_species];
+    for (int i=0;i<n_species;i++){
+        for (int j=0;j<n_species;j++){
+            *( cutoff_matrix + n_species * i + j) = 3.77;
+        }
+    }
+    std::string cutoff_function = "cos";
+    width = 51;
+    int n_func = 2;
+
+    std::vector<std::string> sym_func_list = {"g2", "g4"};
+
+    std::vector<int> sym_func_lengths = {16, 129};
+
+    std::vector<std::vector<double>> sym_func_elements = {{0.001, 0.0, 0.01, 0.0, 0.02, 0.0, 0.035, 0.0, 0.06, 0.0, 0.1, 0.0, 0.2, 0.0, 0.4, 0.0},
+    {1., -1., 0.0001, 1., 1., 0.0001, 2., -1., 0.0001, 2., 1., 0.0001, 1., -1., 0.003, 1., 1., 0.003, 2, -1, 0.003, 2, 1, 0.003, 1, -1, 0.008, 1, 1, 0.008, 2, -1, 0.008, 2, 1, 0.008, 1, -1, 0.015, 1, 1, 0.015, 2, -1, 0.015, 2, 1, 0.015, 4, -1, 0.015, 4, 1, 0.015, 16, -1, 0.015, 16, 1, 0.015, 1, -1, 0.025, 1, 1, 0.025, 2, -1, 0.025, 2, 1, 0.025, 4, -1, 0.025, 4, 1, 0.025, 16, -1, 0.025, 16, 1, 0.025, 1, -1, 0.045, 1, 1, 0.045, 2, -1, 0.045, 2, 1, 0.045, 4, -1, 0.045, 4, 1, 0.045, 16, -1, 0.045, 16, 1, 0.045, 1, -1, 0.08, 1, 1, 0.08, 2, -1, 0.08, 2, 1, 0.08, 4, -1, 0.08, 4, 1, 0.08, 16, 1, 0.08} };
+
+
+
+    for (int i = 0; i < n_func ; i++){
+        if (sym_func_list[i] == "g2"){
+            for (int j = 0; j < sym_func_elements[i].size(); j = j+2) sym_func_elements[i][j] /= (bhor2ang * bhor2ang);
+        } else if (sym_func_list[i] == "g4") {
+            for (int j = 2; j < sym_func_elements[i].size(); j = j+3) sym_func_elements[i][j] /= (bhor2ang * bhor2ang);
+        }
     }
 
-    std::string file_name =argv[1];
+    std::vector<int> dims = {8, 2, 43, 3};
+    set_cutoff(cutoff_function.c_str(), n_species, cutoff_matrix);
+
+    for (int i =0 ; i< n_func; i++){
+        add_descriptor(sym_func_list[i].c_str(), sym_func_elements[i].data(), dims[2 *i], dims[2*i+1] );
+    }
+    delete[] cutoff_matrix;
+}
+
+
+inline double cut_cos(double const r, double const rcut) {
+    return (r < rcut) ? 0.5 * (std::cos(MY_PI * r / rcut) + 1.0) : 0.0;
+}
+void sym_g2(double const eta, double const Rs, double const r, double const rcut, double &phi) {
+    phi = std::exp(-eta * (r - Rs) * (r - Rs)) * cut_cos(r, rcut);
+}
+
+void symmetry_function_atomic(int const i,
+                              double const *coords,
+                              int const *particleSpeciesCodes,
+                              int const *neighlist,
+                              int const numnei,
+                              double *const desc,
+                              SymmetryFunctionParams *SymParam) {
+    // prepare data
+    VectorOfSizeDIM *coordinates = (VectorOfSizeDIM *) coords;
+    int const iSpecies = particleSpeciesCodes[i];
+
+    // Setup loop over neighbors of current particle
+    for (int jj = 0; jj < numnei; ++jj) {
+        // adjust index of particle neighbor
+        int const j = neighlist[jj];
+        int const jSpecies = particleSpeciesCodes[j];
+
+        // cutoff between ij
+        double rcutij = SymParam->rcut_2D_(iSpecies, jSpecies);
+
+        // Compute rij
+        double rij[DIM];
+        for (int dim = 0; dim < DIM; ++dim) {
+            rij[dim] = coordinates[j][dim] - coordinates[i][dim];
+        }
+
+        double const rijsq = rij[0] * rij[0] + rij[1] * rij[1] + rij[2] * rij[2];
+        double const rijmag = std::sqrt(rijsq);
+
+        // if particles i and j not interact
+        if (rijmag > rcutij) { continue; }
+
+        // Loop over descriptors
+        // two-body descriptors
+        for (std::size_t p = 0; p < SymParam->name_.size(); ++p) {
+            if (SymParam->name_[p] != 1 && SymParam->name_[p] != 2 && SymParam->name_[p] != 3) {
+                continue;
+            }
+
+            int idx = SymParam->starting_index_[p];
+            // Loop over same descriptor but different parameter set
+            for (int q = 0; q < SymParam->num_param_sets_[p]; ++q) {
+                double gc = 0.0;
+                    double eta = SymParam->params_[p](q, 0);
+                    auto Rs = SymParam->params_[p](q, 1);
+                    sym_g2(eta, Rs, rijmag, rcutij, gc);
+                desc[idx] += gc;
+                ++idx;
+            }
+        }
+    }
+}
+
+void grad_symmetry_function_atomic(int const i,
+                                   double const *coords,
+                                   double const *d_coords,
+                                   int const *particleSpeciesCodes,
+                                   int const *neighlist,
+                                   int const numnei,
+                                   double *const desc,
+                                   double const *d_grad_loss_zeta,
+                                   SymmetryFunctionParams *SymParam) {
+    __enzyme_autodiff(symmetry_function_atomic,
+                      enzyme_const, i,
+                      enzyme_dup, coords, d_coords,
+                      enzyme_const, particleSpeciesCodes,
+                      enzyme_const, neighlist,
+                      enzyme_const, numnei,
+                      enzyme_dup, desc, d_grad_loss_zeta,
+                      enzyme_const, SymParam);
+}
+
+int main() {
 
     int neigh_list[] = {120,  70,  15,  80,  155,  2,  153, 136,  144,  6,  114,  111,  137,  138,  5};
     int n_neigh[] = {7, 8};
@@ -28,7 +441,7 @@ int main(int argc, char *argv[]) {
     int neigh_from = 0;
 
     auto sf = SymmetryFunctionParams();
-    sf.init(file_name);
+    sf.init();
 
     for(int i = 0; i < 2; i++) {
         auto n_neigh_ = n_neigh[i];
@@ -51,3 +464,380 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
+
+
+
+// --------------------------- Implementation --------------------------- //
+
+template<class DataType>
+_Array_Basic<DataType>::_Array_Basic() {}
+
+template<class DataType>
+_Array_Basic<DataType>::_Array_Basic(std::size_t const count) :
+        m(count, static_cast<DataType>(0)) {}
+
+template<class DataType>
+_Array_Basic<DataType>::_Array_Basic(std::size_t const count,
+                                     DataType const value) :
+        m(count, value) {}
+
+template<class DataType>
+_Array_Basic<DataType>::_Array_Basic(std::size_t const count,
+                                     DataType const *array) :
+        m(array, array + count) {}
+
+template<class DataType>
+_Array_Basic<DataType>::_Array_Basic(_Array_Basic<DataType> const &other) :
+        m(other.m) {}
+
+template<class DataType>
+_Array_Basic<DataType>::_Array_Basic(_Array_Basic<DataType> &&other) :
+        m(std::move(other.m)) {}
+
+template<class DataType>
+_Array_Basic<DataType>::~_Array_Basic() {}
+
+template<class DataType>
+_Array_Basic<DataType> &
+_Array_Basic<DataType>::operator=(_Array_Basic<DataType> const &other) {
+    m.resize(other.size());
+    std::copy(other.m.begin(), other.m.end(), m.begin());
+    return *this;}
+
+template<class DataType>
+_Array_Basic<DataType> &
+_Array_Basic<DataType>::operator=(_Array_Basic<DataType> &&other) {
+    m = std::move(other.m);
+    return *this;}
+
+template<class DataType>
+inline DataType const *_Array_Basic<DataType>::data() const noexcept {
+    return m.data();}
+
+template<class DataType>
+inline DataType *_Array_Basic<DataType>::data() noexcept {
+    return m.data();}
+
+template<class DataType>
+inline std::size_t _Array_Basic<DataType>::size() const {
+    return m.size();}
+
+template<class DataType>
+inline void _Array_Basic<DataType>::clear() noexcept {
+    m.clear();}
+
+template<class DataType>
+inline void _Array_Basic<DataType>::shrink_to_fit() {
+    m.shrink_to_fit();}
+
+template<class DataType>
+inline std::size_t _Array_Basic<DataType>::capacity() const noexcept {
+    return m.capacity();}
+
+template<class DataType>
+inline void _Array_Basic<DataType>::push_back(DataType const &value) {
+    m.push_back(value);}
+
+template<class DataType>
+inline void _Array_Basic<DataType>::push_back(DataType &&value) {
+    m.push_back(value);}
+
+template<class DataType>
+inline void _Array_Basic<DataType>::_range_check(int _n) const {
+    if (_n >= size()) {
+        std::abort();
+    }}
+
+template<class DataType>
+inline void _Array_Basic<DataType>::_range_check(int _n,
+                                                 std::size_t tsize) const {
+    if (_n >= tsize) {
+        std::abort();
+    }}
+
+template<class DataType>
+Array1DView<DataType>::Array1DView(std::size_t const count, DataType *array) :
+        _extentZero(count), m(array) {}
+
+template<class DataType>
+Array1DView<DataType>::Array1DView(Array1DView<DataType> const &other) :
+        _extentZero(other._extentZero), m(other.m) {}
+
+template<class DataType>
+Array1DView<DataType>::~Array1DView() {}
+
+template<class DataType>
+inline DataType const *Array1DView<DataType>::data() const noexcept {
+    return m;}
+
+template<class DataType>
+inline DataType *Array1DView<DataType>::data() noexcept {
+    return m;}
+
+template<class DataType>
+inline const DataType Array1DView<DataType>::operator()(int i) const {
+    return m[i];}
+
+template<class DataType>
+inline DataType &Array1DView<DataType>::operator()(int i) {
+    return m[i];}
+
+template<class DataType>
+inline DataType &Array1DView<DataType>::at(int i) {
+    _range_check(i, _extentZero);
+    return m[i];}
+
+template<class DataType>
+inline DataType const Array1DView<DataType>::at(int i) const {
+    _range_check(i, _extentZero);
+    return m[i];}
+
+template<class DataType>
+const DataType Array1DView<DataType>::operator[](int i) const {
+    return m[i];}
+
+template<class DataType>
+DataType &Array1DView<DataType>::operator[](int i) {
+    return m[i];}
+
+template<class DataType>
+inline void Array1DView<DataType>::_range_check(int _n, std::size_t tsize) const {
+    if (_n >= tsize) {
+        std::abort();
+    }
+}
+
+template<class DataType>
+Array2DView<DataType>::Array2DView(std::size_t const extentZero,
+                                   std::size_t const extentOne,
+                                   DataType *array) :
+        _extentZero(extentZero), _extentOne(extentOne), m(array) {}
+
+template<class DataType>
+Array2DView<DataType>::Array2DView(std::size_t const extentZero,
+                                   std::size_t const extentOne,
+                                   DataType const *array) :
+        _extentZero(extentZero),
+        _extentOne(extentOne),
+        m(const_cast<DataType *>(array)) {}
+
+template<class DataType>
+Array2DView<DataType>::Array2DView(Array2DView<DataType> const &other) :
+        _extentZero(other._extentZero), _extentOne(other._extentOne), m(other.m) {}
+
+template<class DataType>
+Array2DView<DataType>::~Array2DView() {}
+
+template<class DataType>
+inline DataType const *Array2DView<DataType>::data() const noexcept {
+    return m;}
+
+template<class DataType>
+inline DataType *Array2DView<DataType>::data() noexcept {
+    return m;}
+
+template<class DataType>
+inline Array1DView<DataType> Array2DView<DataType>::data_1D(int i) {
+    return Array1DView<DataType>(_extentOne, m + i * _extentOne);}
+
+template<class DataType>
+inline const DataType Array2DView<DataType>::operator()(int i, int j) const {
+    std::size_t const _n = i * _extentOne + j;
+    return m[_n];}
+
+template<class DataType>
+inline DataType &Array2DView<DataType>::operator()(int i, int j) {
+    std::size_t const _n = i * _extentOne + j;
+    return m[_n];}
+
+template<class DataType>
+inline DataType &Array2DView<DataType>::at(int i, int j) {
+    _range_check(i, _extentZero);
+    _range_check(j, _extentOne);
+    std::size_t const _n = i * _extentOne + j;
+    return m[_n];}
+
+template<class DataType>
+inline DataType const Array2DView<DataType>::at(int i, int j) const {
+    _range_check(i, _extentZero);
+    _range_check(j, _extentOne);
+    std::size_t const _n = i * _extentOne + j;
+    return m[_n];}
+
+template<class DataType>
+Array2DView<DataType>::j_operator::j_operator(Array2DView<DataType> &_array,
+                                              int i) :
+        j_array(_array), _i(i) {}
+
+template<class DataType>
+const DataType Array2DView<DataType>::j_operator::operator[](int j) const {
+    std::size_t const _n = _i * j_array._extentOne + j;
+    return j_array.m[_n];}
+
+template<class DataType>
+DataType &Array2DView<DataType>::j_operator::operator[](int j) {
+    std::size_t const _n = _i * j_array._extentOne + j;
+    return j_array.m[_n];}
+
+template<class DataType>
+const typename Array2DView<DataType>::j_operator
+Array2DView<DataType>::operator[](int i) const {
+    return j_operator(*this, i);}
+
+template<class DataType>
+typename Array2DView<DataType>::j_operator
+Array2DView<DataType>::operator[](int i) {
+    return j_operator(*this, i);}
+
+template<class DataType>
+inline void Array2DView<DataType>::_range_check(int _n, std::size_t tsize) const {
+    if (_n >= tsize) {
+        std::abort();
+}}
+
+template<class DataType>
+Array2D<DataType>::Array2D() :
+        _Array_Basic<DataType>(), _extentZero(0), _extentOne(0) {}
+
+template<class DataType>
+Array2D<DataType>::Array2D(std::size_t const extentZero,
+                           std::size_t const extentOne) :
+        _Array_Basic<DataType>(extentZero * extentOne),
+        _extentZero(extentZero),
+        _extentOne(extentOne) {}
+
+template<class DataType>
+Array2D<DataType>::Array2D(std::size_t const extentZero,
+                           std::size_t const extentOne,
+                           DataType const value) :
+        _Array_Basic<DataType>(extentZero * extentOne, value),
+        _extentZero(extentZero),
+        _extentOne(extentOne) {}
+
+template<class DataType>
+Array2D<DataType>::Array2D(std::size_t const extentZero,
+                           std::size_t const extentOne,
+                           DataType const *array) :
+        _Array_Basic<DataType>(extentZero * extentOne, array),
+        _extentZero(extentZero),
+        _extentOne(extentOne) {}
+
+template<class DataType>
+Array2D<DataType>::Array2D(Array2D<DataType> const &other) :
+        _Array_Basic<DataType>(other),
+        _extentZero(other._extentZero),
+        _extentOne(other._extentOne) {}
+
+template<class DataType>
+Array2D<DataType>::Array2D(Array2D<DataType> &&other) :
+        _Array_Basic<DataType>(std::move(other)),
+        _extentZero(other._extentZero),
+        _extentOne(other._extentOne) {}
+
+template<class DataType>
+Array2D<DataType>::~Array2D() {}
+
+template<class DataType>
+Array2D<DataType> &
+Array2D<DataType>::operator=(Array2D<DataType> const &other) {
+    _Array_Basic<DataType>::operator=(other);
+    _extentZero = other._extentZero;
+    _extentOne = other._extentOne;
+    return *this;}
+
+template<class DataType>
+Array2D<DataType> &Array2D<DataType>::operator=(Array2D<DataType> &&other) {
+    _Array_Basic<DataType>::operator=(std::move(other));
+    _extentZero = other._extentZero;
+    _extentOne = other._extentOne;
+    return *this;}
+
+template<class DataType>
+inline Array1DView<DataType> Array2D<DataType>::data_1D(int i) {
+    return Array1DView<DataType>(_extentOne, this->m.data() + i * _extentOne);}
+
+template<class DataType>
+inline void Array2D<DataType>::resize(int const extentZero, int const extentOne) {
+    _extentZero = extentZero;
+    _extentOne = extentOne;
+    std::size_t const _n = _extentZero * _extentOne;
+    this->m.resize(_n, static_cast<DataType>(0));
+}
+
+template<class DataType>
+inline void Array2D<DataType>::resize(int const extentZero,
+                                      int const extentOne,
+                                      DataType const new_value) {
+    _extentZero = extentZero;
+    _extentOne = extentOne;
+    std::size_t const _n = _extentZero * _extentOne;
+    this->m.resize(_n, new_value);
+}
+
+template<class DataType>
+inline void Array2D<DataType>::resize(int const extentZero,
+                                      int const extentOne,
+                                      DataType const *new_array) {
+    _extentZero = extentZero;
+    _extentOne = extentOne;
+    std::size_t const _n = _extentZero * _extentOne;
+    this->m.resize(_n);
+    std::copy(new_array, new_array + _n, this->m.data());
+}
+
+template<class DataType>
+inline const DataType Array2D<DataType>::operator()(int i, int j) const {
+    std::size_t const _n = i * _extentOne + j;
+    return this->m[_n];
+}
+
+template<class DataType>
+inline DataType &Array2D<DataType>::operator()(int i, int j) {
+    std::size_t const _n = i * _extentOne + j;
+    return this->m[_n];
+}
+
+template<class DataType>
+inline DataType &Array2D<DataType>::at(int i, int j) {
+    this->_range_check(i, _extentZero);
+    this->_range_check(j, _extentOne);
+    std::size_t const _n = i * _extentOne + j;
+    return this->m[_n];
+}
+
+template<class DataType>
+inline DataType const Array2D<DataType>::at(int i, int j) const {
+    this->_range_check(i, _extentZero);
+    this->_range_check(j, _extentOne);
+    std::size_t const _n = i * _extentOne + j;
+    return this->m[_n];
+}
+
+template<class DataType>
+Array2D<DataType>::j_operator::j_operator(Array2D<DataType> &_array, int i) :
+        j_array(_array), _i(i) {
+}
+
+template<class DataType>
+const DataType Array2D<DataType>::j_operator::operator[](int j) const {
+    std::size_t const _n = _i * j_array._extentOne + j;
+    return j_array.m[_n];
+}
+
+template<class DataType>
+DataType &Array2D<DataType>::j_operator::operator[](int j) {
+    std::size_t const _n = _i * j_array._extentOne + j;
+    return j_array.m[_n];
+}
+
+template<class DataType>
+const typename Array2D<DataType>::j_operator
+Array2D<DataType>::operator[](int i) const {
+    return j_operator(*this, i);
+}
+
+template<class DataType>
+typename Array2D<DataType>::j_operator Array2D<DataType>::operator[](int i) {
+    return j_operator(*this, i);
+}
+
